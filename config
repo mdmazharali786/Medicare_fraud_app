@@ -1,0 +1,17 @@
+ [core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/mdmazharali786/Medicare_fraud_app.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[gui]
+	wmstate = normal
+	geometry = 893x435+578+420 175 196
+[server]
+	headless = true
+[lfs]
+	repositoryformatversion = 0
