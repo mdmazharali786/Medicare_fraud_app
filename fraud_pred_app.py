@@ -198,7 +198,7 @@ def feature_engg(test_data):
     train_test_merged["ClmCount_Provider_BeneID_ClmDiagnosisCode_1_ClmProcedureCode_1"]=train_test_merged.groupby(['Provider','BeneID','ClmDiagnosisCode_1','ClmProcedureCode_1'])['ClaimID'].transform('count')
 
     #here creating dx code grp for ClmDiagnosisCode_1
-    train_test_merged['ClmDiagnosisCode_1_Grp'] = train_test_merged['ClmDiagnosisCode_1'].astype(str).str[0:2]
+    train_test_merged.loc[:,'ClmDiagnosisCode_1_Grp'] = train_test_merged['ClmDiagnosisCode_1'].astype(str).str[0:2]
     #Average features group by dx code group as per proposed idea in abstract - for ClmDiagnosisCode_1
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['DeductibleAmtPaid'].transform('mean')
