@@ -58,13 +58,13 @@ def get_train_data():
 
 def feature_engg(test_data):
     '''this function will generate data point after feature engineering on raw data passed'''
-
+    #storing test data columns for merging by these columns
     col_merge=test_data.columns
 
     ## Lets add both test and train datasets for generting accurate feature engineered data
     #train_data_all = get_train_data()
     train_test_merged = pd.concat([test_data, get_train_data()[col_merge]])
-    #remove duplicate entries
+    #remove duplicate entriesu
     train_test_merged = train_test_merged.drop_duplicates(subset='ClaimID')
     
     #average feature grouped by provider
@@ -78,13 +78,28 @@ def feature_engg(test_data):
     train_test_merged["PerProviderAvg_NoOfMonths_PartACov"]=train_test_merged.groupby('Provider')['NoOfMonths_PartACov'].transform('mean')
     train_test_merged["PerProviderAvg_NoOfMonths_PartBCov"]=train_test_merged.groupby('Provider')['NoOfMonths_PartBCov'].transform('mean')
     train_test_merged["PerProviderAvg_AdmitForDays"]=train_test_merged.groupby('Provider')['AdmitForDays'].transform('mean')
-
+    #defragmenting dataframe, since after each section of preprocessing dataframe is getting larger this increases time and space complexity
+    #so to reduce this we are merging train data and test data after generating some subsection of preprocessing
+    #and then we are removing generated columns in train data to reduce space complexity
+    # we are doing so because we only require test so after generating features for test data are deleting from train data 
+    #this below line generates list of columns that only need to be merged and also in the same order as it was originaly generated in train data
+    #maintaining sequence is mandetaory as Std Scaler preprocess in the same sequence as it was trained
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data[['ClaimID']].merge(train_test_merged, on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by Ben ID
     train_test_merged["PerBeneIDAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('BeneID')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerBeneIDAvg_DeductibleAmtPaid"]=train_test_merged.groupby('BeneID')['DeductibleAmtPaid'].transform('mean')
     train_test_merged["PerBeneIDAvg_IPAnnualReimbursementAmt"]=train_test_merged.groupby('BeneID')['IPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerBeneIDAvg_AdmitForDays"]=train_test_merged.groupby('BeneID')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by attending physician
     train_test_merged["PerAttendingPhysicianAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('AttendingPhysician')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerAttendingPhysicianAvg_DeductibleAmtPaid"]=train_test_merged.groupby('AttendingPhysician')['DeductibleAmtPaid'].transform('mean')
@@ -93,7 +108,13 @@ def feature_engg(test_data):
     train_test_merged["PerAttendingPhysicianAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('AttendingPhysician')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerAttendingPhysicianAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('AttendingPhysician')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerAttendingPhysicianAvg_AdmitForDays"]=train_test_merged.groupby('AttendingPhysician')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    to_be_ret = temp_cols_list
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by operating physician
     train_test_merged["PerOperatingPhysicianAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('OperatingPhysician')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerOperatingPhysicianAvg_DeductibleAmtPaid"]=train_test_merged.groupby('OperatingPhysician')['DeductibleAmtPaid'].transform('mean')
@@ -102,7 +123,12 @@ def feature_engg(test_data):
     train_test_merged["PerOperatingPhysicianAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('OperatingPhysician')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerOperatingPhysicianAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('OperatingPhysician')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerOperatingPhysicianAvg_AdmitForDays"]=train_test_merged.groupby('OperatingPhysician')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by dx code group
     train_test_merged["PerDiagnosisGroupCodeAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('DiagnosisGroupCode')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerDiagnosisGroupCodeAvg_DeductibleAmtPaid"]=train_test_merged.groupby('DiagnosisGroupCode')['DeductibleAmtPaid'].transform('mean')
@@ -111,7 +137,12 @@ def feature_engg(test_data):
     train_test_merged["PerDiagnosisGroupCodeAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('DiagnosisGroupCode')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerDiagnosisGroupCodeAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('DiagnosisGroupCode')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerDiagnosisGroupCodeAvg_AdmitForDays"]=train_test_merged.groupby('DiagnosisGroupCode')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by admit dx code
     train_test_merged["PerClmAdmitDiagnosisCodeAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmAdmitDiagnosisCode')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmAdmitDiagnosisCodeAvg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmAdmitDiagnosisCode')['DeductibleAmtPaid'].transform('mean')
@@ -120,7 +151,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmAdmitDiagnosisCodeAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmAdmitDiagnosisCode')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmAdmitDiagnosisCodeAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmAdmitDiagnosisCode')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmAdmitDiagnosisCodeAvg_AdmitForDays"]=train_test_merged.groupby('ClmAdmitDiagnosisCode')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by claim procedure code 1
     train_test_merged["PerClmProcedureCode_1Avg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmProcedureCode_1')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmProcedureCode_1Avg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmProcedureCode_1')['DeductibleAmtPaid'].transform('mean')
@@ -129,7 +165,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmProcedureCode_1Avg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmProcedureCode_1')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmProcedureCode_1Avg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmProcedureCode_1')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmProcedureCode_1Avg_AdmitForDays"]=train_test_merged.groupby('ClmProcedureCode_1')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by claim procedure code 2
     train_test_merged["PerClmProcedureCode_2Avg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmProcedureCode_2')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmProcedureCode_2Avg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmProcedureCode_2')['DeductibleAmtPaid'].transform('mean')
@@ -138,7 +179,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmProcedureCode_2Avg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmProcedureCode_2')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmProcedureCode_2Avg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmProcedureCode_2')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmProcedureCode_2Avg_AdmitForDays"]=train_test_merged.groupby('ClmProcedureCode_2')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by claim dx code 1
     train_test_merged["PerClmDiagnosisCode_1Avg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmDiagnosisCode_1')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1Avg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmDiagnosisCode_1')['DeductibleAmtPaid'].transform('mean')
@@ -147,7 +193,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_1Avg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_1')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1Avg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_1')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1Avg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_1')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by claim dx code 2
     train_test_merged["PerClmDiagnosisCode_2Avg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmDiagnosisCode_2')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_2Avg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmDiagnosisCode_2')['DeductibleAmtPaid'].transform('mean')
@@ -156,7 +207,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_2Avg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_2')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_2Avg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_2')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_2Avg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_2')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature group by claim dx code 3
     train_test_merged["PerClmDiagnosisCode_3Avg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmDiagnosisCode_3')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_3Avg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmDiagnosisCode_3')['DeductibleAmtPaid'].transform('mean')
@@ -165,7 +221,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_3Avg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_3')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_3Avg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_3')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_3Avg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_3')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #average feature grouped by Provider+BeneID, Provider+Attending Physician, Provider+ClmAdmitDiagnosisCode, Provider+ClmProcedureCode_1, Provider+ClmDiagnosisCode_1, Provider+State
     train_test_merged["ClmCount_Provider"]=train_test_merged.groupby(['Provider'])['ClaimID'].transform('count')
     train_test_merged["ClmCount_Provider_BeneID"]=train_test_merged.groupby(['Provider','BeneID'])['ClaimID'].transform('count')
@@ -196,9 +257,14 @@ def feature_engg(test_data):
     train_test_merged["ClmCount_Provider_BeneID_ClmProcedureCode_1"]=train_test_merged.groupby(['Provider','BeneID','ClmProcedureCode_1'])['ClaimID'].transform('count')
     train_test_merged["ClmCount_Provider_BeneID_ClmDiagnosisCode_1"]=train_test_merged.groupby(['Provider','BeneID','ClmDiagnosisCode_1'])['ClaimID'].transform('count')
     train_test_merged["ClmCount_Provider_BeneID_ClmDiagnosisCode_1_ClmProcedureCode_1"]=train_test_merged.groupby(['Provider','BeneID','ClmDiagnosisCode_1','ClmProcedureCode_1'])['ClaimID'].transform('count')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #here creating dx code grp for ClmDiagnosisCode_1
-    train_test_merged['ClmDiagnosisCode_1_Grp'] = train_test_merged['ClmDiagnosisCode_1'].astype(str).str[0:2].copy()
+    train_test_merged['ClmDiagnosisCode_1_Grp'] = train_test_merged['ClmDiagnosisCode_1'].astype(str).str[0:2]
     #Average features group by dx code group as per proposed idea in abstract - for ClmDiagnosisCode_1
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_InscClaimAmtReimbursed"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['InscClaimAmtReimbursed'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_DeductibleAmtPaid"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['DeductibleAmtPaid'].transform('mean')
@@ -207,7 +273,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_1')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_1_GrpAvg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_1_Grp')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #here creating dx code grp for ClmDiagnosisCode_1
     train_test_merged['ClmDiagnosisCode_2_Grp'] = train_test_merged['ClmDiagnosisCode_2'].astype(str).str[0:2]
     #Average features group by dx code group as per proposed idea in abstract - for ClmDiagnosisCode_2
@@ -218,7 +289,12 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_2_GrpAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_2')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_2_GrpAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_2_Grp')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_2_GrpAvg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_2_Grp')['AdmitForDays'].transform('mean')
-
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     #here creating dx code grp for ClmDiagnosisCode_3
     train_test_merged['ClmDiagnosisCode_3_Grp'] = train_test_merged['ClmDiagnosisCode_3'].astype(str).str[0:2]
     #Average features group by dx code group as per proposed idea in abstract - for ClmDiagnosisCode_3
@@ -229,22 +305,26 @@ def feature_engg(test_data):
     train_test_merged["PerClmDiagnosisCode_3_GrpAvg_OPAnnualReimbursementAmt"]=train_test_merged.groupby('ClmDiagnosisCode_3')['OPAnnualReimbursementAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_3_GrpAvg_OPAnnualDeductibleAmt"]=train_test_merged.groupby('ClmDiagnosisCode_3_Grp')['OPAnnualDeductibleAmt'].transform('mean')
     train_test_merged["PerClmDiagnosisCode_3_GrpAvg_AdmitForDays"]=train_test_merged.groupby('ClmDiagnosisCode_3_Grp')['AdmitForDays'].transform('mean')
-    start=time.time()
+    #defragmenting df
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    train_test_merged.drop(columns=temp_cols_list, axis=1, inplace=True)
+    
+    
     # for calculating tf_idf on claim dx codes
     dx_col_list = ['ClmDiagnosisCode_1', 'ClmDiagnosisCode_2', 'ClmDiagnosisCode_3', 'ClmDiagnosisCode_4']
     temp_data = tf_idf_on_dx_cpt(train_test_merged[['ClaimID', 'Provider']+dx_col_list], dx_col_list)
-    train_test_merged = train_test_merged.merge(temp_data, on=['ClaimID', 'Provider'])
-
+    #defragmenting df
+    test_data_all = test_data_all.merge(temp_data, on=['ClaimID', 'Provider'])
+    
+    
     # for calculating tf_idf on claim cpt codes
     cpt_col_list = ['ClmProcedureCode_1', 'ClmProcedureCode_2', 'ClmProcedureCode_3']
     temp_data = tf_idf_on_dx_cpt(train_test_merged[['ClaimID', 'Provider']+cpt_col_list], cpt_col_list)
-    train_test_merged = train_test_merged.merge(temp_data, on=['ClaimID', 'Provider'])
-    end=time.time()
-    st.write('time taken in tfidf ', end-start)
+    #defragmenting df
+    test_data_all = test_data_all.merge(temp_data, on=['ClaimID', 'Provider'])
+    del temp_data
     
-    ##### Lets impute numeric columns with 0
-    cols1 = train_test_merged.select_dtypes([np.number]).columns
-    train_test_merged[cols1]=train_test_merged[cols1].fillna(value=0)
 
     ## Lets Convert types of gender and race to categorical.
     train_test_merged.Gender=train_test_merged.Gender.astype('category')
@@ -252,8 +332,14 @@ def feature_engg(test_data):
 
     # Lets create dummies for categorrical columns.
     train_test_merged=pd.get_dummies(train_test_merged,columns=['Gender','Race'],drop_first=True)
-
-    test_data_all = test_data[['ClaimID']].merge(train_test_merged, on='ClaimID')
+    test_data = test_data.loc[:, ~test_data.columns.isin(['Gender','Race'])]
+    temp_cols_list = sorted(set(train_test_merged.columns)-set(test_data.columns), key=list(train_test_merged.columns).index)
+    test_data_all = test_data_all.merge(train_test_merged[['ClaimID']+temp_cols_list], on='ClaimID')
+    del train_test_merged
+    
+    ##### Lets impute numeric columns with 0
+    cols1 = test_data_all.select_dtypes([np.number]).columns
+    test_data_all[cols1]=test_data_all[cols1].fillna(value=0)
     
     # Lets remove unnecessary columns ,as we grouped based on these columns and derived maximum infromation from them.
     remove_these_columns=['BeneID', 'ClaimID', 'ClaimStartDt','ClaimEndDt','AttendingPhysician',
@@ -265,13 +351,14 @@ def feature_engg(test_data):
            'ClmProcedureCode_4', 'ClmProcedureCode_5', 'ClmProcedureCode_6',
            'ClmAdmitDiagnosisCode', 'AdmissionDt',
            'DischargeDt', 'DiagnosisGroupCode','DOB', 'DOD',
-            'State', 'County', 'ClmDiagnosisCode_1_Grp', 'ClmDiagnosisCode_2_Grp', 'ClmDiagnosisCode_3_Grp']
+            'State', 'County', 'ClmDiagnosisCode_1_Grp', 'ClmDiagnosisCode_2_Grp', 'ClmDiagnosisCode_3_Grp', 'Gender','Race']
 
     test_data_all = test_data_all.drop(axis=1, columns=remove_these_columns)
+
     ## Lets apply StandardScaler and transform values to its z form,where 99.7% values range between -3 to 3.
     sc = load('std_scaler.bin')   # MinMaxScaler
     X_test=sc.transform(test_data_all.iloc[:,1:])   #Apply Standard Scaler to unseen data
-    return X_test 
+    return X_test
 
 def tf_idf_on_dx_cpt(dataframe, dx_or_cpt_col_list):
     '''this function calculates tf, idf and tf_idf features on dx codes or cpt codes as per proposed idea of abstract document'''
