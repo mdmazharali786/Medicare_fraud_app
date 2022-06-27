@@ -512,7 +512,7 @@ def preparing_data(data_ben, data_inp, data_out):
     
     #Lets make union of Inpatienta and outpatient data .
     #We will use all keys in outpatient data as we want to make union and dont want duplicate columns from both tables.
-    merged_data = pd.merge(data_inp, data_out, how='outer')
+    merged_data = pd.concat([data_inp, data_out])
     
     #Lets merge All patient data with beneficiary details data based on 'BeneID' as joining key for inner join
     merged_data = pd.merge(merged_data, data_ben, left_on='BeneID', right_on='BeneID', how='inner')
@@ -527,6 +527,9 @@ def get_train_data():
     train_data_out = pd.read_csv('archive/Train_Outpatientdata-1542865627584.csv')
     return preparing_data(train_data_ben, train_data_inp, train_data_out)
 
+@st.cache
+def load_std_scalr():
+    return load('std_scaler.bin')
 
 def feature_engg(test_data):
     '''this function will generate data point after feature engineering on raw data passed'''
@@ -828,7 +831,7 @@ def feature_engg(test_data):
     test_data_all = test_data_all.drop(axis=1, columns=remove_these_columns)
 
     ## Lets apply StandardScaler and transform values to its z form,where 99.7% values range between -3 to 3.
-    sc = load('std_scaler.bin')   # MinMaxScaler
+    sc = load_std_scalr()   # MinMaxScaler
     X_test=sc.transform(test_data_all.iloc[:,1:])   #Apply Standard Scaler to unseen data
     return X_test
 
@@ -843,13 +846,13 @@ def tf_idf_on_dx_cpt(dataframe, dx_or_cpt_col_list):
         no_of_dx_in_each_prov = dataframe.groupby('Provider')[each_col].count().reset_index()
         no_of_dx_in_each_prov.rename(columns={each_col:each_col+'_doc'}, inplace=True)
         dataframe = dataframe.merge(no_of_dx_in_each_prov, on=['Provider'], how='outer')
-        dataframe.loc[:,each_col+'TF'] = dataframe.loc[:,each_col+'_term']/dataframe.loc[:,each_col+'_doc']
+        dataframe[each_col+'TF'] = dataframe[each_col+'_term']/dataframe[each_col+'_doc']
 
         no_of_doc_containing_dx = dataframe.groupby(each_col)[['Provider']].count().reset_index()
         no_of_doc_containing_dx.rename(columns={'Provider':each_col+'_IDF'}, inplace=True)
-        no_of_doc_containing_dx.loc[:,each_col+'_IDF'] = np.log2(N/no_of_doc_containing_dx.loc[:,each_col+'_IDF'])
+        no_of_doc_containing_dx[each_col+'_IDF'] = np.log2(N/no_of_doc_containing_dx[each_col+'_IDF'])
         dataframe = dataframe.merge(no_of_doc_containing_dx, on=each_col, how='outer')
-        dataframe.loc[:,each_col+'TF-IDF'] = dataframe.loc[:,each_col+'TF']*dataframe.loc[:,each_col+'_IDF']
+        dataframe[each_col+'TF-IDF'] = dataframe[each_col+'TF']*dataframe[each_col+'_IDF']
         dataframe.drop([each_col, each_col+'_term', each_col+'_doc'], axis=1, inplace=True)
 
     return dataframe
