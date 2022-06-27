@@ -55,11 +55,6 @@ def get_train_data():
     train_data_out = pd.read_csv('archive/Train_Outpatientdata-1542865627584.csv')
     return preparing_data(train_data_ben, train_data_inp, train_data_out)
 
-@st.cache
-def load_std_scalr(file):
-    std_sc = load(file)
-    return std_sc
-
 def feature_engg(test_data):
     '''this function will generate data point after feature engineering on raw data passed'''
     #storing test data columns for merging by these columns
@@ -360,7 +355,7 @@ def feature_engg(test_data):
     test_data_all = test_data_all.drop(axis=1, columns=remove_these_columns)
 
     ## Lets apply StandardScaler and transform values to its z form,where 99.7% values range between -3 to 3.
-    sc = load_std_scalr('std_scaler.bin')   # MinMaxScaler
+    sc = load('std_scaler.bin')   # MinMaxScaler
     X_test=sc.transform(test_data_all.iloc[:,1:])   #Apply Standard Scaler to unseen data
     return X_test
 
@@ -528,10 +523,6 @@ def get_train_data():
     train_data_out = pd.read_csv('archive/Train_Outpatientdata-1542865627584.csv')
     return preparing_data(train_data_ben, train_data_inp, train_data_out)
 
-@st.cache
-def load_std_scalr():
-    return load('std_scaler.bin')
-
 def feature_engg(test_data):
     '''this function will generate data point after feature engineering on raw data passed'''
     #storing test data columns for merging by these columns
@@ -832,7 +823,7 @@ def feature_engg(test_data):
     test_data_all = test_data_all.drop(axis=1, columns=remove_these_columns)
 
     ## Lets apply StandardScaler and transform values to its z form,where 99.7% values range between -3 to 3.
-    sc = load_std_scalr()   # MinMaxScaler
+    sc = load('std_scaler.bin')   # MinMaxScaler
     X_test=sc.transform(test_data_all.iloc[:,1:])   #Apply Standard Scaler to unseen data
     return X_test
 
